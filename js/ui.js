@@ -421,10 +421,8 @@ function saveSettings() {
   closeSettings();
   if (CONFIG.POLYGON_API_KEY) {
     showToast(t('toast_key_saved'), 'success');
-    activateLive();
   } else {
     showToast(t('toast_demo_mode'), 'info');
-    startDemoLoop();
   }
 }
 
