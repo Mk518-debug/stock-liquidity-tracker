@@ -1,0 +1,11 @@
+{
+  "name": "stock-liquidity-tracker",
+  "version": "1.0.0",
+  "description": "Real-time US stock liquidity scanner",
+  "scripts": {
+    "start": "npx serve . --listen $PORT"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
