@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LiquidFlow — Real-Time US Stock Liquidity Scanner</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet" />
+</head>
+<body>
+<div id="app">
+
+  <!-- ── Top Navigation ───────────────────────────────────────────────────── -->
+  <nav id="topbar">
+    <div class="logo">
+      <div class="logo-icon">⚡</div>
+      <span class="logo-text">Liquid<span>Flow</span></span>
+    </div>
+
+    <div id="market-status" class="market-status open">OPEN</div>
+    <div id="market-time" style="font-family:var(--font-mono);font-size:12px;color:var(--text2)">--:--:--</div>
+
+    <div id="stats-bar"></div>
+
+    <div class="topbar-actions">
+      <!-- Language toggle -->
+      <div class="lang-toggle">
+        <button class="lang-btn active" data-lang="en" onclick="setLanguage('en')">EN</button>
+        <span class="lang-sep">|</span>
+        <button class="lang-btn" data-lang="ar" onclick="setLanguage('ar')">عربي</button>
+      </div>
+
+      <button class="btn" id="btn-settings" onclick="openSettings()">⚙ Settings</button>
+    </div>
+  </nav>
+
+  <!-- ── Filter / Control Bar ─────────────────────────────────────────────── -->
+  <div id="filterbar">
+    <div class="filter-search">
+      <span class="filter-search-icon">⌕</span>
+      <input id="filter-input" type="text" placeholder="Search ticker or sector…" autocomplete="off" />
+    </div>
+
+    <div class="filter-sep"></div>
+
+    <button class="filter-chip active"  onclick="applyQuickFilter('all')"      title="Show all stocks">ALL</button>
+    <button class="filter-chip"         onclick="applyQuickFilter('highVol')"   title="Relative Volume ≥ 5x">HIGH VOL</button>
+    <button class="filter-chip"         onclick="applyQuickFilter('highShort')" title="Short Interest ≥ 15%">HIGH SHORT</button>
+    <button class="filter-chip"         onclick="applyQuickFilter('halted')"    title="Currently halted">HALTED</button>
+    <button class="filter-chip"         onclick="applyQuickFilter('liq')"       title="Liquidity events ≥ 3">LIQ 3+</button>
+    <button class="filter-chip"         onclick="applyQuickFilter('gainers')"   title="% Change ≥ +10%">GAINERS</button>
+
+    <div class="filter-sep"></div>
+
+    <span class="last-update" id="last-update-label">LIVE</span>
+  </div>
+
+  <!-- ── Halt Alert Bar ───────────────────────────────────────────────────── -->
+  <div id="halt-bar">
+    <span class="bar-label">⊘ HALTS</span>
+    <div id="halt-ticker-bar">
+      <span class="halt-bar-empty">No active halts</span>
+    </div>
+  </div>
+
+  <!-- ── Main content area ─────────────────────────────────────────────────── -->
+  <div id="main-content">
+    <div id="scanner-wrap">
+      <table id="scanner-table">
+        <thead id="scanner-thead"></thead>
+        <tbody id="scanner-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── Bottom Panels ─────────────────────────────────────────────────────── -->
+  <div id="bottom-panel">
+
+    <div class="bottom-section">
+      <div class="bottom-section-header">🐋 Whale Trades</div>
+      <div class="bottom-scroll">
+        <div id="global-whales"></div>
+      </div>
+    </div>
+
+    <div class="bottom-section">
+      <div class="bottom-section-header">📰 News Feed</div>
+      <div class="bottom-scroll">
+        <div id="global-news"></div>
+      </div>
+    </div>
+
+  </div>
+
+</div><!-- /app -->
+
+<!-- ── Detail Panel ──────────────────────────────────────────────────────────── -->
+<div id="detail-panel"></div>
+
+<!-- ── Settings Modal ────────────────────────────────────────────────────────── -->
+<div id="settings-modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span id="modal-title">⚙ Scanner Settings</span>
+      <button class="close-btn" onclick="closeSettings()">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="form-group">
+        <label class="form-label" id="modal-api-label" for="api-key-input">Polygon.io API Key</label>
+        <input
+          class="form-input"
+          id="api-key-input"
+          type="password"
+          placeholder="Enter your Polygon.io API key…"
+          autocomplete="off"
+        />
+        <div class="form-hint">
+          <span id="modal-api-hint1">Get a free key at <strong style="color:var(--cyan)">polygon.io</strong> — required for live real-time data.</span><br>
+          <span id="modal-api-hint2">Without a key the scanner runs in demo mode with simulated data.</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" id="modal-data-label">Data Mode</label>
+        <div style="display:flex;gap:10px;margin-top:4px;flex-wrap:wrap;">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:var(--text1)">
+            <input type="radio" name="data-mode" value="demo" checked style="accent-color:var(--cyan)" />
+            <span id="modal-radio-demo-lbl">Demo (simulated, no key needed)</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:var(--text1)">
+            <input type="radio" name="data-mode" value="live" style="accent-color:var(--cyan)" />
+            <span id="modal-radio-live-lbl">Live (Polygon.io WebSocket)</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" id="modal-whale-label">Whale Trade Threshold</label>
+        <input
+          class="form-input"
+          id="whale-threshold-input"
+          type="number"
+          value="150000"
+          min="10000"
+          step="10000"
+        />
+        <div class="form-hint" id="modal-whale-hint">Minimum trade value (USD) to classify as a whale trade.</div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn"         id="modal-btn-cancel" onclick="closeSettings()">Cancel</button>
+      <button class="btn btn-primary" id="modal-btn-save"   onclick="saveSettings()">Save &amp; Apply</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Toast container ────────────────────────────────────────────────────── -->
+<div id="toast-container"></div>
+
+<!-- ── Scripts ───────────────────────────────────────────────────────────── -->
+<script src="js/config.js"></script>
+<script src="js/data.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/app.js"></script>
+
+<!-- ── Quick-filter & overrides ──────────────────────────────────────────── -->
+<script>
+  const activeChips = new Set(['all']);
+
+  function applyQuickFilter(type) {
+    document.querySelectorAll('.filter-chip').forEach(el => el.classList.remove('active'));
+
+    if (type === 'all' || activeChips.has(type)) {
+      activeChips.clear();
+      activeChips.add('all');
+      document.querySelectorAll('.filter-chip')[0].classList.add('active');
+      STATE.customFilter = null;
+    } else {
+      activeChips.clear();
+      activeChips.add(type);
+      const chipMap = { highVol: 1, highShort: 2, halted: 3, liq: 4, gainers: 5 };
+      const idx = chipMap[type];
+      if (idx !== undefined) document.querySelectorAll('.filter-chip')[idx].classList.add('active');
+
+      const filters = {
+        highVol:   s => s.relVolume >= 5,
+        highShort: s => s.shortPct >= 15,
+        halted:    s => !!s.haltStatus,
+        liq:       s => s.liqCount >= 3,
+        gainers:   s => s.changePct >= 10,
+      };
+      STATE.customFilter = filters[type] || null;
+    }
+
+    renderTable(getFilteredSorted());
+  }
+
+  function getFilteredSorted() {
+    let list = getSortedStocks();
+    if (STATE.customFilter) list = list.filter(STATE.customFilter);
+    return list;
+  }
+
+  // Wrap fullRender to include filter and last-update label
+  const _origFullRender = fullRender;
+  window.fullRender = function () {
+    renderHeader();
+    renderTable(getFilteredSorted());
+    renderBottomWhales();
+    renderBottomNews();
+    renderHaltAlerts();
+    if (STATE.selectedTicker) renderDetailPanel(STATE.selectedTicker);
+    const el = document.getElementById('last-update-label');
+    if (el) el.textContent = t('live') + '  ' + timeNow();
+  };
+
+  // Wrap saveSettings to also persist whale threshold
+  const _origSave = saveSettings;
+  window.saveSettings = function () {
+    const thresh = parseInt(document.getElementById('whale-threshold-input').value, 10);
+    if (!isNaN(thresh) && thresh > 0) CONFIG.WHALE_TRADE_MIN_USD = thresh;
+    _origSave();
+  };
+</script>
+
+</body>
+</html>
