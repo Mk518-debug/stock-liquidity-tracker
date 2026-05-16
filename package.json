@@ -3,10 +3,7 @@
   "version": "1.0.0",
   "description": "Real-time US stock liquidity scanner",
   "scripts": {
-    "start": "serve . --listen $PORT"
-  },
-  "dependencies": {
-    "serve": "^14.2.4"
+    "start": "node server.js"
   },
   "engines": {
     "node": ">=18"
