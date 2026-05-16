@@ -206,18 +206,8 @@
     return list;
   }
 
-  // Wrap fullRender to include filter and last-update label
-  const _origFullRender = fullRender;
-  window.fullRender = function () {
-    renderHeader();
-    renderTable(getFilteredSorted());
-    renderBottomWhales();
-    renderBottomNews();
-    renderHaltAlerts();
-    if (STATE.selectedTicker) renderDetailPanel(STATE.selectedTicker);
-    const el = document.getElementById('last-update-label');
-    if (el) el.textContent = t('live') + '  ' + timeNow();
-  };
+  // fullRender is defined in app.js — expose getFilteredSorted so it can use filters
+  window.getFilteredSorted = getFilteredSorted;
 
   // Wrap saveSettings to also persist whale threshold
   const _origSave = saveSettings;

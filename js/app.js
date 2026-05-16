@@ -34,6 +34,18 @@ function boot() {
   });
 }
 
+function fullRender() {
+  renderHeader();
+  const stocks = window.getFilteredSorted ? window.getFilteredSorted() : getSortedStocks();
+  renderTable(stocks);
+  renderBottomWhales();
+  renderBottomNews();
+  renderHaltAlerts();
+  if (STATE.selectedTicker) renderDetailPanel(STATE.selectedTicker);
+  const el = document.getElementById('last-update-label');
+  if (el) el.textContent = (yahooReady ? '● YAHOO' : t('live')) + '  ' + timeNow();
+}
+
 function startDemoLoop() {
   if (demoLoop) return;
   demoLoop = setInterval(() => { tickUpdate(); fullRender(); }, CONFIG.DEMO_INTERVAL);
