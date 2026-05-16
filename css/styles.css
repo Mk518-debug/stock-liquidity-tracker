@@ -874,6 +874,20 @@ html, body {
 /* ── Scrollbar for scanner-wrap ──────────────────────────────────────────────── */
 #scanner-wrap::-webkit-scrollbar { width: 5px; height: 5px; }
 
+/* ── Data source badge ──────────────────────────────────────────────────────── */
+.data-source-badge {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  padding: 3px 9px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  border: 1px solid;
+}
+.data-source-badge.demo  { color: var(--text3); background: rgba(255,255,255,0.04); border-color: var(--border); }
+.data-source-badge.live  { color: var(--green); background: rgba(0,230,118,0.08);   border-color: rgba(0,230,118,0.3); animation: blink 2s infinite; }
+.data-source-badge.error { color: var(--red);   background: rgba(255,48,96,0.08);   border-color: rgba(255,48,96,0.3); }
+
 /* ── Language toggle ─────────────────────────────────────────────────────────── */
 .lang-toggle {
   display: flex;
